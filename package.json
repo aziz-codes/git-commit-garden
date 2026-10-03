@@ -1,0 +1,14 @@
+{
+  "name": "commit-garden",
+  "version": "1.0.0",
+  "description": "Grow your GitHub contribution graph: auto-commit and push to a repo with a live dashboard.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

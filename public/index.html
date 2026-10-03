@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commit Garden</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">
+        <i></i><i></i><i></i><i></i>
+      </span>
+      <div>
+        <h1>Commit Garden</h1>
+        <p>Grow your GitHub contribution graph</p>
+      </div>
+    </div>
+    <div class="status" id="status"><span class="dot"></span><span id="statusText">Idle</span></div>
+  </header>
+
+  <main>
+    <section class="card setup">
+      <form id="form">
+        <label class="field">
+          <span>GitHub repository URL</span>
+          <div class="repo-input">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            <input id="repoUrl" type="text" placeholder="https://github.com/username/repo" autocomplete="off" required />
+          </div>
+        </label>
+
+        <div class="modes" role="radiogroup">
+          <label class="mode">
+            <input type="radio" name="mode" value="live" checked />
+            <div>
+              <strong>Live</strong>
+              <small>Commit &amp; push every few seconds, right now</small>
+            </div>
+          </label>
+          <label class="mode">
+            <input type="radio" name="mode" value="backfill" />
+            <div>
+              <strong>Backfill</strong>
+              <small>Spread commits across past days</small>
+            </div>
+          </label>
+        </div>
+
+        <div class="grid-fields" data-for="live">
+          <label class="field small"><span>Interval (sec)</span><input id="interval" type="number" min="1" value="10" /></label>
+          <label class="field small"><span>Max commits <em>0 = ∞</em></span><input id="maxCommits" type="number" min="0" value="0" /></label>
+          <label class="field small"><span>Push every N commits</span><input id="pushEvery" type="number" min="1" value="1" /></label>
+        </div>
+        <div class="grid-fields hidden" data-for="backfill">
+          <label class="field small"><span>Days back</span><input id="days" type="number" min="1" max="366" value="90" /></label>
+          <label class="field small"><span>Max commits / day</span><input id="maxPerDay" type="number" min="1" max="50" value="5" /></label>
+          <label class="field small"><span>Active days %</span><input id="density" type="number" min="1" max="100" value="80" /></label>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="startBtn" class="btn primary">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4 2.5v11l9-5.5z"/></svg>
+            Start growing
+          </button>
+          <button type="button" id="stopBtn" class="btn ghost" disabled>
+            <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2" fill="currentColor"/></svg>
+            Stop
+          </button>
+          <p class="hint" id="hint"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="stats">
+      <div class="card stat"><span class="label">Total commits</span><span class="value" id="statCommits">0</span></div>
+      <div class="card stat"><span class="label">Pushed</span><span class="value" id="statPushed">0</span></div>
+      <div class="card stat"><span class="label">Pending push</span><span class="value" id="statPending">0</span></div>
+      <div class="card stat"><span class="label">Elapsed</span><span class="value" id="statElapsed">0:00</span></div>
+    </section>
+
+    <section class="card pipeline">
+      <ol id="steps">
+        <li data-phase="setup"><span class="bubble">1</span>Setup</li>
+        <li data-phase="changing"><span class="bubble">2</span>Changing file</li>
+        <li data-phase="committing"><span class="bubble">3</span>Committing</li>
+        <li data-phase="pushing"><span class="bubble">4</span>Pushing</li>
+        <li data-phase="waiting"><span class="bubble">5</span>Waiting</li>
+      </ol>
+      <div class="meta">
+        <div><span>Repo</span><code id="metaRepo">—</code></div>
+        <div><span>Branch</span><code id="metaBranch">—</code></div>
+        <div><span>Last commit</span><code id="metaLast">—</code></div>
+        <div><span>Author</span><code id="metaAuthor">—</code></div>
+      </div>
+    </section>
+
+    <section class="card graph-card">
+      <div class="card-head">
+        <h2>Contributions this session</h2>
+        <div class="legend">Less <i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div>
+      </div>
+      <div class="graph-wrap"><div class="graph" id="graph"></div></div>
+    </section>
+
+    <section class="two-col">
+      <div class="card">
+        <div class="card-head"><h2>test.txt</h2><span class="tag">tail</span></div>
+        <pre class="file" id="file"><span class="muted">File preview appears here once started.</span></pre>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Activity</h2><button class="link" id="clearLog" type="button">Clear</button></div>
+        <ul class="log" id="log"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
